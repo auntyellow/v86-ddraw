@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <windows.h>
-#include "ddraw.h"
+#include <ddraw.h>
 
 #define BMP_WIDTH 64
 #define BMP_HEIGHT 64
@@ -28,6 +28,17 @@ LPDIRECTDRAWPALETTE lpPalette = NULL;
 
 int x = 0, y = 0;
 int dx = 1, dy = 1;
+
+void RestoreCursorAndMode(void) {
+    ClipCursor(NULL);
+    while (ShowCursor(TRUE) < 0) {
+        Sleep(1);
+    }
+    SetCursor(LoadCursor(NULL, IDC_ARROW));
+    if (lpDD != NULL) {
+        IDirectDraw_RestoreDisplayMode(lpDD);
+    }
+}
 
 HRESULT CreateAndAttachPalette() {
     PALETTEENTRY entries[256];
@@ -268,6 +279,8 @@ void CleanUp() {
         IDirectDrawSurface_Release(lpPrimary);
         lpPrimary = NULL;
     }
+
+    RestoreCursorAndMode();
 
     if (lpDD != NULL) {
         IDirectDraw_Release(lpDD);
