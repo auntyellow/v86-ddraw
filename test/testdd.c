@@ -144,7 +144,7 @@ HRESULT LoadBMPToSurface(LPDIRECTDRAWSURFACE* surface, LPCSTR filename) {
     BITMAPFILEHEADER bmfh;
     BITMAPINFOHEADER bmih;
     BYTE bmBits[BMP_HEIGHT*BMP_PITCH];
-    BYTE *src, *dst;
+    LPBYTE src, dst;
     int i, j;
 
     ZeroMemory(&ddsd, sizeof(ddsd));

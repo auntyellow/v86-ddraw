@@ -115,7 +115,7 @@ DWORD WINAPI render_soft_main(void)
                             }
                             SetPaletteEntries(ddraw->render.hPalette, 0, 256, pe);
                         } else {
-                            LOGPALETTE *pLogPal = (LOGPALETTE *) HeapAlloc(GetProcessHeap(), 0, sizeof(LOGPALETTE) + 255*sizeof(PALETTEENTRY));
+                            LPLOGPALETTE pLogPal = (LPLOGPALETTE) HeapAlloc(GetProcessHeap(), 0, sizeof(LOGPALETTE) + 255*sizeof(PALETTEENTRY));
                             pLogPal->palVersion = 0x300;
                             pLogPal->palNumEntries = 256;
                             PALETTEENTRY *pe = pLogPal->palPalEntry;

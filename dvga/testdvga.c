@@ -41,7 +41,7 @@ int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hPrevInstance, LPSTR lpCmdLine, in
   DWORD written;
   BYTE bmBits[BMP_HEIGHT*BMP_PITCH];
   BYTE data[16 + BMP_HEIGHT*IMG_PITCH];
-  BYTE *src, *dst;
+  LPBYTE src, dst;
   DEVMODE devMode;
   MSG msg;
   LONG result;
