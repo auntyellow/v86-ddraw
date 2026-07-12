@@ -744,7 +744,7 @@ HRESULT __stdcall ddraw_surface_Flip(IDirectDrawSurfaceImpl *This, LPDIRECTDRAWS
 
 HRESULT __stdcall ddraw_surface_GetAttachedSurface(IDirectDrawSurfaceImpl *This, LPDDSCAPS lpDdsCaps, LPDIRECTDRAWSURFACE FAR *surface)
 {
-    printf("IDirectDrawSurface::GetAttachedSurface(This=%p, dwCaps=%08X, surface=%p) ???\n", This, lpDdsCaps->dwCaps, surface);
+    printf("IDirectDrawSurface::GetAttachedSurface(This=%p, dwCaps=%08X, surface=%p) ???\n", This, (unsigned int) lpDdsCaps->dwCaps, surface);
     
     if ((This->caps & DDSCAPS_PRIMARYSURFACE) && (This->caps & DDSCAPS_FLIP) && (lpDdsCaps->dwCaps & DDSCAPS_BACKBUFFER))
     {
@@ -800,7 +800,7 @@ HRESULT __stdcall ddraw_surface_GetDC(IDirectDrawSurfaceImpl *This, HDC FAR *a)
 #endif
     if (This->width % 4)
     {
-        printf("   GetDC: width=%d height=%d ???\n", This->width, This->height);
+        printf("   GetDC: width=%lu height=%lu ???\n", This->width, This->height);
     }
 
     RGBQUAD *data = 
@@ -1158,7 +1158,7 @@ HRESULT __stdcall ddraw_CreateSurface(IDirectDrawImpl *This, LPDDSURFACEDESC lpD
 
     if (lpDDSurfaceDesc->dwFlags & DDSD_BACKBUFFERCOUNT)
     {
-        printf("  dwBackBufferCount=%d\n", lpDDSurfaceDesc->dwBackBufferCount);
+        printf("  dwBackBufferCount=%lu\n", lpDDSurfaceDesc->dwBackBufferCount);
     }
 
     printf(" Surface = %p (%dx%d@%d)\n", Surface, (int)Surface->width, (int)Surface->height, (int)Surface->bpp);

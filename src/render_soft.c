@@ -98,9 +98,9 @@ DWORD WINAPI render_soft_main(void)
                         DWORD written;
                         BOOL success = WriteFile(ddraw->render.hDPal, ddraw->primary->palette->data_bgr, 1024, &written, NULL);
                         if (success) {
-                            printf("Wrote %d bytes into VGA palette\n", written);
+                            printf("Wrote %lu bytes into VGA palette\n", written);
                         } else {
-                            printf("Error %d: Write palette failed\n", GetLastError());
+                            printf("Error %lu: Write palette failed\n", GetLastError());
                         }
                     }
                     if (ddraw->render.winVer >= 5) {
@@ -202,9 +202,9 @@ DWORD WINAPI render_soft_main(void)
                 DWORD written;
                 BOOL success = WriteFile(ddraw->render.hDVGA, ddraw->primary->surface, ddraw->height*ddraw->primary->lPitch, &written, NULL);
                 if (success) {
-                    // printf("Wrote %d bytes\n", written);
+                    // printf("Wrote %lu bytes\n", written);
                 } else {
-                    printf("Error %d: Write failed\n", GetLastError());
+                    printf("Error %lu: Write failed\n", GetLastError());
                 }
             }
         }

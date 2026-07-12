@@ -235,7 +235,7 @@ HRESULT __stdcall ddraw_EnumDisplayModes(IDirectDrawImpl *This, DWORD dwFlags, L
 
     if (This->bpp)
     {
-        printf("    This->bpp=%d\n", This->bpp);
+        printf("    This->bpp=%lu\n", This->bpp);
 
         //set up some filters to keep the list short
         DWORD refreshRate = 0;
@@ -1743,12 +1743,12 @@ HRESULT WINAPI DirectDrawCreate(GUID FAR* lpGUID, LPDIRECTDRAW FAR* lplpDD, IUnk
 
     This->render.hDVGA = CreateFile("\\\\.\\DirectVGA", GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, NULL);
     if (This->render.hDVGA == INVALID_HANDLE_VALUE) {
-        printf("Error %d: Could not open device \\\\.\\DirectVGA. Make sure the driver is loaded.\n", GetLastError());
+        printf("Error %lu: Could not open device \\\\.\\DirectVGA. Make sure the driver is loaded.\n", GetLastError());
         This->render.hDPal = INVALID_HANDLE_VALUE;
     } else {
         This->render.hDPal = CreateFile("\\\\.\\DirectPalette", GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, NULL);
         if (This->render.hDPal == INVALID_HANDLE_VALUE) {
-            printf("Error %d: Could not open device \\\\.\\DirectPalette. Make sure the driver is loaded.\n", GetLastError());
+            printf("Error %lu: Could not open device \\\\.\\DirectPalette. Make sure the driver is loaded.\n", GetLastError());
         }
     }
     OSVERSIONINFO osVerInfo;
