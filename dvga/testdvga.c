@@ -13,20 +13,20 @@
 #define _256_TO_6(x) (((x) + 25)/51)
 
 void DbgPrint(const char *format, ...) {
-  char buffer[512];
   va_list args;
+  char buffer[512];
+  int i;
   va_start(args, format);
-  _vsnprintf(buffer, sizeof(buffer), format, args);
+  i = _vsnprintf(buffer, sizeof(buffer), format, args);
+  buffer[i < 0 ? sizeof(buffer) - 1 : i] = '\0';
   // OutputDebugStringA(buffer);
   MessageBoxA(NULL, buffer, "DVGA Test", MB_ICONEXCLAMATION);
   va_end(args);
 }
 
 LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
-  switch (msg) {
-  case WM_DESTROY:
+  if (msg == WM_DESTROY || (msg == WM_KEYDOWN && wParam == VK_ESCAPE)) {
     PostQuitMessage(0);
-    break;
   }
   return DefWindowProc(hwnd, msg, wParam, lParam);
 }
@@ -45,7 +45,6 @@ int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hPrevInstance, LPSTR lpCmdLine, in
   DEVMODE devMode;
   MSG msg;
   LONG result;
-  BOOL success;
   HANDLE hDVGA;
 #if TEST_BPP == 8
   HANDLE hDPal;
@@ -110,12 +109,6 @@ int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hPrevInstance, LPSTR lpCmdLine, in
     }
   }
 
-  hDVGA = CreateFile("\\\\.\\DirectVGA2", GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, NULL);
-  if (hDVGA == INVALID_HANDLE_VALUE) {
-    DbgPrint("Error %d: Could not open device \\\\.\\DirectVGA2. Make sure the driver is loaded.\n", GetLastError());
-    return 1;
-  }
-
   // Change Display Mode
   ZeroMemory(&devMode, sizeof(devMode));
   devMode.dmSize = sizeof(devMode);
@@ -141,15 +134,22 @@ int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hPrevInstance, LPSTR lpCmdLine, in
   wc.hInstance = hInst;
   wc.hCursor = LoadCursor(NULL, IDC_ARROW);
   wc.lpszClassName = "DVGA2Wnd";
-  RegisterClass(&wc);
-  hwnd = CreateWindowEx(0, "DVGA2Wnd", "DVGA2 Demo", WS_POPUP | WS_VISIBLE, 0, 0, 0 /* SCREEN_WIDTH */, 0 /* SCREEN_HEIGHT */, NULL, NULL, hInst, NULL);
+  if (RegisterClass(&wc) == 0) {
+    DbgPrint("Error %d: Could not register class \"DVGA2Wnd\".\n", GetLastError());
+    return 1;
+  }
+  hwnd = CreateWindow("DVGA2Wnd", "DVGA2 Demo", WS_POPUP | WS_VISIBLE, 0, 0, 0 /* SCREEN_WIDTH */, 0 /* SCREEN_HEIGHT */, NULL, NULL, hInst, NULL);
   if (!hwnd) {
     DbgPrint("Error %d: Could not create window.\n", GetLastError());
     return 1;
   }
-  success = ShowWindow(hwnd, SW_SHOW);
-  if (!success) {
-    DbgPrint("Error %d: Could not create window.\n", GetLastError());
+  ShowWindow(hwnd, SW_SHOW);
+
+  hDVGA = CreateFile("\\\\.\\DirectVGA2", GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, NULL);
+  if (hDVGA == INVALID_HANDLE_VALUE) {
+    DbgPrint("Error %d: Could not open device \\\\.\\DirectVGA2. Make sure the driver is loaded.\n", GetLastError());
+    DestroyWindow(hwnd);
+    return 1;
   }
 
 #if TEST_BPP == 8
@@ -173,8 +173,7 @@ int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hPrevInstance, LPSTR lpCmdLine, in
   if (hDPal == INVALID_HANDLE_VALUE) {
     // DbgPrint("Warning %d: Could not open device \\\\.\\DirectPalette.\n", GetLastError());
   } else {
-    success = WriteFile(hDPal, pLogPal->palPalEntry, pLogPal->palNumEntries*4, &written, NULL);
-    if (success) {
+    if (WriteFile(hDPal, pLogPal->palPalEntry, pLogPal->palNumEntries*4, &written, NULL)) {
       // DbgPrint("Wrote %d bytes into VGA palette\n", written);
     } else {
       DbgPrint("Error %d: Write palette failed\n", GetLastError());
@@ -185,16 +184,16 @@ int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hPrevInstance, LPSTR lpCmdLine, in
   GetVersionEx(&osVerInfo);
   if (osVerInfo.dwMajorVersion >= 5) {
     hPal = CreatePalette(pLogPal);
-    if (!hPal) {
+    if (hPal == NULL) {
       DbgPrint("Error %d: CreatePalette failed.\n", GetLastError());
-      return 1;
+    } else {
+      hdc = GetDC(NULL);
+      SetSystemPaletteUse(hdc, SYSPAL_NOSTATIC256);
+      SelectPalette(hdc, hPal, FALSE);
+      RealizePalette(hdc);
+      ReleaseDC(NULL, hdc);
+      DeleteObject(hPal);
     }
-    hdc = GetDC(NULL);
-    SetSystemPaletteUse(hdc, SYSPAL_NOSTATIC256);
-    SelectPalette(hdc, hPal, FALSE);
-    RealizePalette(hdc);
-    ReleaseDC(NULL, hdc);
-    DeleteObject(hPal);
   }
   HeapFree(GetProcessHeap(), 0, pLogPal);
 #endif
@@ -205,7 +204,7 @@ int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hPrevInstance, LPSTR lpCmdLine, in
   dy = 1;
   while (TRUE) {
     if (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) {
-      if (msg.message == WM_QUIT || (msg.message == WM_KEYDOWN && msg.wParam == VK_ESCAPE)) {
+      if (msg.message == WM_QUIT) {
         break;
       }
       TranslateMessage(&msg);
@@ -228,8 +227,7 @@ int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hPrevInstance, LPSTR lpCmdLine, in
     ((LPDWORD) data)[1] = SCREEN_PITCH;
     ((LPDWORD) data)[2] = BMP_WIDTH*XPITCH;
     ((LPDWORD) data)[3] = BMP_HEIGHT;
-    success = WriteFile(hDVGA, data, sizeof(data), &written, NULL);
-    if (success) {
+    if (WriteFile(hDVGA, data, sizeof(data), &written, NULL)) {
       // DbgPrint("Wrote %d bytes to (%d, %d)\n", written, x, y);
     } else {
       DbgPrint("Error %d: Write failed\n", GetLastError());
@@ -237,5 +235,7 @@ int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hPrevInstance, LPSTR lpCmdLine, in
     Sleep(10);
   }
   CloseHandle(hDVGA);
+  DestroyWindow(hwnd);
+  UnregisterClass("DVGA2Wnd", hInst);
   return 0;
 }
