@@ -17,8 +17,9 @@ void DbgPrint(const char *format, ...) {
   va_start(args, format);
   i = _vsnprintf(buffer, sizeof(buffer), format, args);
   buffer[i < 0 ? sizeof(buffer) - 1 : i] = '\0';
-  // OutputDebugStringA(buffer);
-  MessageBoxA(NULL, buffer, "DirectDraw Test", MB_ICONEXCLAMATION);
+  OutputDebugStringA(buffer);
+  // TODO write into file under Win9x
+  // MessageBoxA(NULL, buffer, "DirectDraw Test", MB_ICONEXCLAMATION);
   va_end(args);
 }
 
@@ -57,7 +58,7 @@ int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hPrevInstance, LPSTR lpCmdLine, in
   BITMAPFILEHEADER bmfh;
   BITMAPINFOHEADER bmih;
   BYTE bmBits[BMP_HEIGHT*BMP_PITCH];
-  LPBYTE src, dst;
+  LPBYTE src, dst, lpSurfaceImage;
   MSG msg;
   HRESULT hr;
   DDSURFACEDESC ddsd;
@@ -65,6 +66,8 @@ int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hPrevInstance, LPSTR lpCmdLine, in
   LPDIRECTDRAW lpDD;
   LPDIRECTDRAWSURFACE lpPrimary, lpBackBuffer, lpImage;
   LPDIRECTDRAWPALETTE lpPalette;
+  RECT rect;
+  LONG lPitchImage;
   int i, x, y, dx, dy;
   /*
   HBITMAP hBmp, hOldBmp;
@@ -259,9 +262,11 @@ int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hPrevInstance, LPSTR lpCmdLine, in
     return CleanUp(1, hInst, hwnd, lpDD, lpPrimary, lpBackBuffer, lpImage, lpPalette);
   }
 
+  lpSurfaceImage = (LPBYTE) ddsd.lpSurface;
+  lPitchImage = ddsd.lPitch;
   for (y = 0; y < BMP_HEIGHT; y ++) {
     src = bmBits + (BMP_HEIGHT - 1 - y)*BMP_PITCH;
-    dst = (LPBYTE) ddsd.lpSurface + y*ddsd.lPitch;
+    dst = lpSurfaceImage + y*lPitchImage;
     for (x = 0; x < BMP_WIDTH; x ++) {
 #if TEST_BPP == 8
       dst[0] = _256_TO_6(src[2])*36 + _256_TO_6(src[1])*6 + _256_TO_6(src[0]);
@@ -287,7 +292,8 @@ int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hPrevInstance, LPSTR lpCmdLine, in
       src += 3;
     }
   }
-  IDirectDrawSurface_Unlock(lpImage, NULL);
+
+  // IDirectDrawSurface_Unlock(lpImage, NULL);
 
   x = 0;
   y = 0;
@@ -314,10 +320,41 @@ int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hPrevInstance, LPSTR lpCmdLine, in
     }
     // DbgPrint("Position: (%d, %d)\n", x, y);
     // Render
-    IDirectDrawSurface_BltFast(lpBackBuffer, x, y, lpImage, NULL, DDBLTFAST_WAIT);
+    // IDirectDrawSurface_BltFast(lpBackBuffer, x, y, lpImage, NULL, DDBLTFAST_WAIT);
+
+    // Write into BackBuffer Directly
+    ZeroMemory(&ddsd, sizeof(ddsd));
+    ddsd.dwSize = sizeof(ddsd);
+    rect.left = x;
+    rect.top = y;
+    rect.right = x + BMP_WIDTH;
+    rect.bottom = y + BMP_HEIGHT;
+    // Lock(lpPrimary, ...) returns DDERR_CANTLOCKSURFACE under VBEMP
+    // Lock(..., &rect, ...) doesn't work under cnc/vga-ddraw
+    // hr = IDirectDrawSurface_Lock(lpBackBuffer, &rect, &ddsd, DDLOCK_SURFACEMEMORYPTR | DDLOCK_WAIT | DDLOCK_WRITEONLY, NULL);
+    hr = IDirectDrawSurface_Lock(lpBackBuffer, NULL, &ddsd, DDLOCK_SURFACEMEMORYPTR | DDLOCK_WAIT | DDLOCK_WRITEONLY, NULL);
+    if (FAILED(hr)) {
+      DbgPrint("Lock Failed, error = 0x%08X", hr);
+      return CleanUp(1, hInst, hwnd, lpDD, lpPrimary, lpBackBuffer, lpImage, lpPalette);
+    }
+    for (i = 0; i < BMP_HEIGHT; i ++) {
+      // for Lock(..., &rect, ...)
+      // memcpy((LPBYTE) ddsd.lpSurface + i*ddsd.lPitch, lpSurfaceImage + i*lPitchImage, lPitchImage);
+      // for Lock(..., NULL, ...)
+      memcpy((LPBYTE) ddsd.lpSurface + (y + i)*ddsd.lPitch + x*(TEST_BPP/8), lpSurfaceImage + i*lPitchImage, lPitchImage);
+    }
+    // Unlock(lpBackBuffer, &rect) returns DDERR_NOTLOCKED
+    hr = IDirectDrawSurface_Unlock(lpBackBuffer, NULL);
+    if (FAILED(hr)) {
+      DbgPrint("Unlock returned 0x%08X", hr);
+      return CleanUp(1, hInst, hwnd, lpDD, lpPrimary, lpBackBuffer, lpImage, lpPalette);
+    }
+
     IDirectDrawSurface_Flip(lpPrimary, NULL, DDFLIP_WAIT);
     Sleep(10);
   }
+
+  IDirectDrawSurface_Unlock(lpImage, NULL);
 
   // Reset Cursor
   ClipCursor(NULL);
