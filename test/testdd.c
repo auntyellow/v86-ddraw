@@ -32,13 +32,16 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
 
 void ReleaseSurface(LPDIRECTDRAWSURFACE lpSurface) {
   if (lpSurface != NULL) {
+    IDirectDrawSurface_SetPalette(lpSurface, NULL);
     IDirectDrawSurface_Release(lpSurface);
   }
 }
 
 int CleanUp(int ret, HINSTANCE hInst, HWND hwnd, LPDIRECTDRAW lpDD, LPDIRECTDRAWSURFACE lpPrimary, LPDIRECTDRAWSURFACE lpBackBuffer, LPDIRECTDRAWSURFACE lpImage, LPDIRECTDRAWPALETTE lpPalette) {
   ReleaseSurface(lpImage);
-  ReleaseSurface(lpBackBuffer);
+  if (lpBackBuffer != lpPrimary) {
+    ReleaseSurface(lpBackBuffer);
+  }
   ReleaseSurface(lpPrimary);
   if (lpPalette != NULL) {
     IDirectDrawPalette_Release(lpPalette);
@@ -62,11 +65,13 @@ int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hPrevInstance, LPSTR lpCmdLine, in
   MSG msg;
   HRESULT hr;
   DDSURFACEDESC ddsd;
-  DDSCAPS ddscaps;
+#ifdef DDS_FLIP
+  DDSCAPS ddsCaps;
+#endif
   LPDIRECTDRAW lpDD;
   LPDIRECTDRAWSURFACE lpPrimary, lpBackBuffer, lpImage;
   LPDIRECTDRAWPALETTE lpPalette;
-  RECT rect;
+  // RECT rect;
   LONG lPitchImage;
   int i, x, y, dx, dy;
   /*
@@ -142,23 +147,32 @@ int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hPrevInstance, LPSTR lpCmdLine, in
   lpPrimary = NULL;
   ZeroMemory(&ddsd, sizeof(ddsd));
   ddsd.dwSize = sizeof(ddsd);
+#ifdef DDS_FLIP
   ddsd.dwFlags = DDSD_CAPS | DDSD_BACKBUFFERCOUNT;
-  ddsd.ddsCaps.dwCaps = DDSCAPS_PRIMARYSURFACE | DDSCAPS_FLIP | DDSCAPS_COMPLEX;
   ddsd.dwBackBufferCount = 1;
+  ddsd.ddsCaps.dwCaps = DDSCAPS_PRIMARYSURFACE | DDSCAPS_FLIP | DDSCAPS_COMPLEX;
+#else
+  ddsd.dwFlags = DDSD_CAPS;
+  ddsd.ddsCaps.dwCaps = DDSCAPS_PRIMARYSURFACE;
+#endif
   hr = IDirectDraw_CreateSurface(lpDD, &ddsd, &lpPrimary, NULL);
   if (FAILED(hr)) {
     DbgPrint("CreateSurface (Primary) Failed, error = 0x%08X", hr);
     return CleanUp(1, hInst, hwnd, lpDD, NULL, NULL, NULL, NULL);
   }
 
+#ifdef DDS_FLIP
   lpBackBuffer = NULL;
-  ZeroMemory(&ddscaps, sizeof(ddscaps));
-  ddscaps.dwCaps = DDSCAPS_BACKBUFFER;
-  hr = IDirectDrawSurface_GetAttachedSurface(lpPrimary, &ddscaps, &lpBackBuffer);
+  ZeroMemory(&ddsCaps, sizeof(ddsCaps));
+  ddsCaps.dwCaps = DDSCAPS_BACKBUFFER;
+  hr = IDirectDrawSurface_GetAttachedSurface(lpPrimary, &ddsCaps, &lpBackBuffer);
   if (FAILED(hr)) {
     DbgPrint("GetAttachedSurface Failed, error = 0x%08X", hr);
     return CleanUp(1, hInst, hwnd, lpDD, lpPrimary, NULL, NULL, NULL);
   }
+#else
+  lpBackBuffer = lpPrimary;
+#endif
 
   lpImage = NULL;
   ZeroMemory(&ddsd, sizeof(ddsd));
@@ -211,11 +225,13 @@ int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hPrevInstance, LPSTR lpCmdLine, in
     DbgPrint("SetPalette (Primary) Failed, error = 0x%08X", hr);
     return CleanUp(1, hInst, hwnd, lpDD, lpPrimary, lpBackBuffer, NULL, lpPalette);
   }
+#ifdef DDS_FLIP
   hr = IDirectDrawSurface_SetPalette(lpBackBuffer, lpPalette);
   if (FAILED(hr)) {
     DbgPrint("SetPalette (BackBuffer) Failed, error = 0x%08X", hr);
     return CleanUp(1, hInst, hwnd, lpDD, lpPrimary, lpBackBuffer, NULL, lpPalette);
   }
+#endif
   hr = IDirectDrawSurface_SetPalette(lpImage, lpPalette);
   if (FAILED(hr)) {
     DbgPrint("SetPalette (Image) Failed, error = 0x%08X", hr);
@@ -325,13 +341,15 @@ int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hPrevInstance, LPSTR lpCmdLine, in
     // Write into BackBuffer Directly
     ZeroMemory(&ddsd, sizeof(ddsd));
     ddsd.dwSize = sizeof(ddsd);
+    /*
     rect.left = x;
     rect.top = y;
     rect.right = x + BMP_WIDTH;
     rect.bottom = y + BMP_HEIGHT;
-    // Lock(lpPrimary, ...) returns DDERR_CANTLOCKSURFACE under VBEMP
+    */
     // Lock(..., &rect, ...) doesn't work under cnc/vga-ddraw
     // hr = IDirectDrawSurface_Lock(lpBackBuffer, &rect, &ddsd, DDLOCK_SURFACEMEMORYPTR | DDLOCK_WAIT | DDLOCK_WRITEONLY, NULL);
+    // Lock(lpPrimary, ...) returns DDERR_CANTLOCKSURFACE under VBEMP
     hr = IDirectDrawSurface_Lock(lpBackBuffer, NULL, &ddsd, DDLOCK_SURFACEMEMORYPTR | DDLOCK_WAIT | DDLOCK_WRITEONLY, NULL);
     if (FAILED(hr)) {
       DbgPrint("Lock Failed, error = 0x%08X", hr);
@@ -350,7 +368,9 @@ int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hPrevInstance, LPSTR lpCmdLine, in
       return CleanUp(1, hInst, hwnd, lpDD, lpPrimary, lpBackBuffer, lpImage, lpPalette);
     }
 
+#ifdef DDS_FLIP
     IDirectDrawSurface_Flip(lpPrimary, NULL, DDFLIP_WAIT);
+#endif
     Sleep(10);
   }
 
