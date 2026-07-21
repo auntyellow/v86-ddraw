@@ -484,7 +484,7 @@ HRESULT __stdcall ddraw_surface_BltFast(IDirectDrawSurfaceImpl *This, DWORD dst_
     IDirectDrawSurfaceImpl *Source = (IDirectDrawSurfaceImpl *)lpDDSrcSurface;
 
 #if _DEBUG_X
-    printf("IDirectDrawSurface::BltFast(This=%p, x=%d, y=%d, lpDDSrcSurface=%p, lpSrcRect=%p, flags=%08X)\n", This, dst_x, dst_y, lpDDSrcSurface, lpSrcRect, flags);
+    printf("IDirectDrawSurface::BltFast(This=%p, x=%lu, y=%lu, lpDDSrcSurface=%p, lpSrcRect=%p, flags=%08lX)\n", This, dst_x, dst_y, lpDDSrcSurface, lpSrcRect, flags);
 
     if (flags & DDBLTFAST_NOCOLORKEY)
     {
@@ -671,7 +671,7 @@ HRESULT __stdcall ddraw_surface_EnumOverlayZOrders(IDirectDrawSurfaceImpl *This,
 HRESULT __stdcall ddraw_surface_Flip(IDirectDrawSurfaceImpl *This, LPDIRECTDRAWSURFACE surface, DWORD flags)
 {
 #if _DEBUG_X
-    printf("IDirectDrawSurface::Flip(This=%p, surface=%p, flags=%08X)\n", This, surface, flags);
+    printf("IDirectDrawSurface::Flip(This=%p, surface=%p, flags=%08lX)\n", This, surface, flags);
 #endif
 
     if(This->caps & DDSCAPS_PRIMARYSURFACE && ddraw->render.run)
@@ -744,7 +744,7 @@ HRESULT __stdcall ddraw_surface_Flip(IDirectDrawSurfaceImpl *This, LPDIRECTDRAWS
 
 HRESULT __stdcall ddraw_surface_GetAttachedSurface(IDirectDrawSurfaceImpl *This, LPDDSCAPS lpDdsCaps, LPDIRECTDRAWSURFACE FAR *surface)
 {
-    printf("IDirectDrawSurface::GetAttachedSurface(This=%p, dwCaps=%08X, surface=%p) ???\n", This, (unsigned int) lpDdsCaps->dwCaps, surface);
+    printf("IDirectDrawSurface::GetAttachedSurface(This=%p, dwCaps=%08lX, surface=%p) ???\n", This, lpDdsCaps->dwCaps, surface);
     
     if ((This->caps & DDSCAPS_PRIMARYSURFACE) && (This->caps & DDSCAPS_FLIP) && (lpDdsCaps->dwCaps & DDSCAPS_BACKBUFFER))
     {
@@ -781,7 +781,7 @@ HRESULT __stdcall ddraw_surface_GetClipper(IDirectDrawSurfaceImpl *This, LPDIREC
 HRESULT __stdcall ddraw_surface_GetColorKey(IDirectDrawSurfaceImpl *This, DWORD flags, LPDDCOLORKEY colorKey)
 {
 #if _DEBUG_X
-    printf("DirectDrawSurface::GetColorKey(This=%p, flags=0x%08X, colorKey=%p) ???\n", This, flags, colorKey);
+    printf("DirectDrawSurface::GetColorKey(This=%p, flags=0x%08lX, colorKey=%p) ???\n", This, flags, colorKey);
 #endif
 
     if (colorKey)
@@ -936,12 +936,12 @@ HRESULT __stdcall ddraw_surface_SetClipper(IDirectDrawSurfaceImpl *This, LPDIREC
 HRESULT __stdcall ddraw_surface_SetColorKey(IDirectDrawSurfaceImpl *This, DWORD flags, LPDDCOLORKEY colorKey)
 {
 #if _DEBUG_X
-    printf("DirectDrawSurface::SetColorKey(This=%p, flags=0x%08X, colorKey=%p) ???\n", This, flags, colorKey);
+    printf("DirectDrawSurface::SetColorKey(This=%p, flags=0x%08lX, colorKey=%p) ???\n", This, flags, colorKey);
 
     if (colorKey)
     {
-        printf("  dwColorSpaceHighValue=%d\n", colorKey->dwColorSpaceHighValue);
-        printf("  dwColorSpaceLowValue=%d\n", colorKey->dwColorSpaceLowValue);
+        printf("  dwColorSpaceHighValue=%lu\n", colorKey->dwColorSpaceHighValue);
+        printf("  dwColorSpaceLowValue=%lu\n", colorKey->dwColorSpaceLowValue);
     }
 #endif
 

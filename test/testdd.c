@@ -96,7 +96,7 @@ int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hPrevInstance, LPSTR lpCmdLine, in
     return 1;
   }
   if (bmfh.bfType != 0x4D42 || bmih.biWidth != BMP_WIDTH || bmih.biHeight != BMP_HEIGHT || bmih.biBitCount != 24) {
-    DbgPrint("Error: wizard.bmp should be \"BM\" %d x %d x 24, actual 0x%04X %d x %d x %d\n", BMP_WIDTH, BMP_HEIGHT, bmfh.bfType, bmih.biWidth, bmih.biHeight, bmih.biBitCount);
+    DbgPrint("Error: wizard.bmp should be \"BM\" %d x %d x 24, actual 0x%04X %ld x %ld x %u\n", BMP_WIDTH, BMP_HEIGHT, bmfh.bfType, bmih.biWidth, bmih.biHeight, bmih.biBitCount);
     fclose(fp);
     return 1;
   }
@@ -130,17 +130,17 @@ int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hPrevInstance, LPSTR lpCmdLine, in
   lpDD = NULL;
   hr = DirectDrawCreate(NULL, &lpDD, NULL);
   if (FAILED(hr)) {
-    DbgPrint("DirectDrawCreate Failed, error = 0x%08X", hr);
+    DbgPrint("DirectDrawCreate Failed, error = 0x%08lX", hr);
     return CleanUp(1, hInst, hwnd, NULL, NULL, NULL, NULL, NULL);
   }
   hr = IDirectDraw_SetCooperativeLevel(lpDD, hwnd, DDSCL_FULLSCREEN | DDSCL_EXCLUSIVE);
   if (FAILED(hr)) {
-    DbgPrint("SetCooperativeLevel Failed, error = 0x%08X", hr);
+    DbgPrint("SetCooperativeLevel Failed, error = 0x%08lX", hr);
     return CleanUp(1, hInst, hwnd, lpDD, NULL, NULL, NULL, NULL);
   }
   hr = IDirectDraw_SetDisplayMode(lpDD, SCREEN_WIDTH, SCREEN_HEIGHT, TEST_BPP);
   if (FAILED(hr)) {
-    DbgPrint("SetCooperativeLevel Failed, error = 0x%08X", hr);
+    DbgPrint("SetCooperativeLevel Failed, error = 0x%08lX", hr);
     return CleanUp(1, hInst, hwnd, lpDD, NULL, NULL, NULL, NULL);
   }
 
@@ -157,7 +157,7 @@ int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hPrevInstance, LPSTR lpCmdLine, in
 #endif
   hr = IDirectDraw_CreateSurface(lpDD, &ddsd, &lpPrimary, NULL);
   if (FAILED(hr)) {
-    DbgPrint("CreateSurface (Primary) Failed, error = 0x%08X", hr);
+    DbgPrint("CreateSurface (Primary) Failed, error = 0x%08lX", hr);
     return CleanUp(1, hInst, hwnd, lpDD, NULL, NULL, NULL, NULL);
   }
 
@@ -167,7 +167,7 @@ int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hPrevInstance, LPSTR lpCmdLine, in
   ddsCaps.dwCaps = DDSCAPS_BACKBUFFER;
   hr = IDirectDrawSurface_GetAttachedSurface(lpPrimary, &ddsCaps, &lpBackBuffer);
   if (FAILED(hr)) {
-    DbgPrint("GetAttachedSurface Failed, error = 0x%08X", hr);
+    DbgPrint("GetAttachedSurface Failed, error = 0x%08lX", hr);
     return CleanUp(1, hInst, hwnd, lpDD, lpPrimary, NULL, NULL, NULL);
   }
 #else
@@ -183,7 +183,7 @@ int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hPrevInstance, LPSTR lpCmdLine, in
   ddsd.dwHeight = BMP_HEIGHT;
   hr = IDirectDraw_CreateSurface(lpDD, &ddsd, &lpImage, NULL);
   if (FAILED(hr)) {
-    DbgPrint("CreateSurface (Image) Failed, error = 0x%08X", hr);
+    DbgPrint("CreateSurface (Image) Failed, error = 0x%08lX", hr);
     return CleanUp(1, hInst, hwnd, lpDD, lpPrimary, lpBackBuffer, NULL, NULL);
   }
 
@@ -217,24 +217,24 @@ int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hPrevInstance, LPSTR lpCmdLine, in
   }
   hr = IDirectDraw_CreatePalette(lpDD, DDPCAPS_8BIT | DDPCAPS_ALLOW256, entries, &lpPalette, NULL);
   if (FAILED(hr)) {
-    DbgPrint("CreatePalette Failed, error = 0x%08X", hr);
+    DbgPrint("CreatePalette Failed, error = 0x%08lX", hr);
     return CleanUp(1, hInst, hwnd, lpDD, lpPrimary, lpBackBuffer, NULL, NULL);
   }
   hr = IDirectDrawSurface_SetPalette(lpPrimary, lpPalette);
   if (FAILED(hr)) {
-    DbgPrint("SetPalette (Primary) Failed, error = 0x%08X", hr);
+    DbgPrint("SetPalette (Primary) Failed, error = 0x%08lX", hr);
     return CleanUp(1, hInst, hwnd, lpDD, lpPrimary, lpBackBuffer, NULL, lpPalette);
   }
 #ifdef DDS_FLIP
   hr = IDirectDrawSurface_SetPalette(lpBackBuffer, lpPalette);
   if (FAILED(hr)) {
-    DbgPrint("SetPalette (BackBuffer) Failed, error = 0x%08X", hr);
+    DbgPrint("SetPalette (BackBuffer) Failed, error = 0x%08lX", hr);
     return CleanUp(1, hInst, hwnd, lpDD, lpPrimary, lpBackBuffer, NULL, lpPalette);
   }
 #endif
   hr = IDirectDrawSurface_SetPalette(lpImage, lpPalette);
   if (FAILED(hr)) {
-    DbgPrint("SetPalette (Image) Failed, error = 0x%08X", hr);
+    DbgPrint("SetPalette (Image) Failed, error = 0x%08lX", hr);
     return CleanUp(1, hInst, hwnd, lpDD, lpPrimary, lpBackBuffer, lpImage, lpPalette);
   }
 #endif
@@ -252,12 +252,12 @@ int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hPrevInstance, LPSTR lpCmdLine, in
     return CleanUp(1, hInst, hwnd, lpDD, lpPrimary, lpBackBuffer, lpImage, lpPalette);
   }
   if (bmp.bmWidth != BMP_WIDTH || bmp.bmHeight != BMP_HEIGHT || bmp.bmBitsPixel != 24) {
-    DbgPrint("Error: wizard.bmp should be %d x %d x 24, actual %d x %d x %d\n", BMP_WIDTH, BMP_HEIGHT, bmp.bmWidth, bmp.bmHeight, bmp.bmBitsPixel);
+    DbgPrint("Error: wizard.bmp should be %d x %d x 24, actual %ld x %ld x %u\n", BMP_WIDTH, BMP_HEIGHT, bmp.bmWidth, bmp.bmHeight, bmp.bmBitsPixel);
     return CleanUp(1, hInst, hwnd, lpDD, lpPrimary, lpBackBuffer, lpImage, lpPalette);
   }
   hr = IDirectDrawSurface_GetDC(lpImage, &hdc);
   if (FAILED(hr)) {
-    DbgPrint("GetDC Failed, error = 0x%08X", hr);
+    DbgPrint("GetDC Failed, error = 0x%08lX", hr);
     return CleanUp(1, hInst, hwnd, lpDD, lpPrimary, lpBackBuffer, lpImage, lpPalette);
   }
   hdcBmp = CreateCompatibleDC(NULL);
@@ -274,7 +274,7 @@ int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hPrevInstance, LPSTR lpCmdLine, in
   ddsd.dwSize = sizeof(ddsd);
   hr = IDirectDrawSurface_Lock(lpImage, NULL, &ddsd, DDLOCK_SURFACEMEMORYPTR | DDLOCK_WAIT, NULL);
   if (FAILED(hr)) {
-    DbgPrint("Lock Failed, error = 0x%08X", hr);
+    DbgPrint("Lock Failed, error = 0x%08lX", hr);
     return CleanUp(1, hInst, hwnd, lpDD, lpPrimary, lpBackBuffer, lpImage, lpPalette);
   }
 
@@ -352,7 +352,7 @@ int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hPrevInstance, LPSTR lpCmdLine, in
     // Lock(lpPrimary, ...) returns DDERR_CANTLOCKSURFACE under VBEMP
     hr = IDirectDrawSurface_Lock(lpBackBuffer, NULL, &ddsd, DDLOCK_SURFACEMEMORYPTR | DDLOCK_WAIT | DDLOCK_WRITEONLY, NULL);
     if (FAILED(hr)) {
-      DbgPrint("Lock Failed, error = 0x%08X", hr);
+      DbgPrint("Lock Failed, error = 0x%08lX", hr);
       return CleanUp(1, hInst, hwnd, lpDD, lpPrimary, lpBackBuffer, lpImage, lpPalette);
     }
     for (i = 0; i < BMP_HEIGHT; i ++) {
@@ -364,7 +364,7 @@ int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hPrevInstance, LPSTR lpCmdLine, in
     // Unlock(lpBackBuffer, &rect) returns DDERR_NOTLOCKED
     hr = IDirectDrawSurface_Unlock(lpBackBuffer, NULL);
     if (FAILED(hr)) {
-      DbgPrint("Unlock returned 0x%08X", hr);
+      DbgPrint("Unlock Failed, error = 0x%08lX", hr);
       return CleanUp(1, hInst, hwnd, lpDD, lpPrimary, lpBackBuffer, lpImage, lpPalette);
     }
 
