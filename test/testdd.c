@@ -32,7 +32,8 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
 
 void ReleaseSurface(LPDIRECTDRAWSURFACE lpSurface) {
   if (lpSurface != NULL) {
-    IDirectDrawSurface_SetPalette(lpSurface, NULL);
+    // cnc/vga-ddraw doesn't support NULL
+    // IDirectDrawSurface_SetPalette(lpSurface, NULL);
     IDirectDrawSurface_Release(lpSurface);
   }
 }
