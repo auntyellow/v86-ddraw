@@ -1363,7 +1363,7 @@ void dump_ddsd(DWORD dwFlags)
     {
         printf("    DDSD_LINEARSIZE\n");
     }
-    if(dwFlags & DDSD_ALL)
+    if((dwFlags & DDSD_ALL) == DDSD_ALL)
     {
         printf("    DDSD_ALL\n");
     }
