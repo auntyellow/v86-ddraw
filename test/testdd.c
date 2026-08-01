@@ -32,7 +32,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
 
 void ReleaseSurface(LPDIRECTDRAWSURFACE lpSurface) {
   if (lpSurface != NULL) {
-    // cnc/vga-ddraw doesn't support NULL
+    // cnc-draw (1.3.4.0) & vga-ddraw don't support NULL
     // IDirectDrawSurface_SetPalette(lpSurface, NULL);
     IDirectDrawSurface_Release(lpSurface);
   }
@@ -348,7 +348,7 @@ int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hPrevInstance, LPSTR lpCmdLine, in
     rect.right = x + BMP_WIDTH;
     rect.bottom = y + BMP_HEIGHT;
     */
-    // Lock(..., &rect, ...) doesn't work under cnc/vga-ddraw
+    // Lock(..., &rect, ...) doesn't work under cnc-draw (1.3.4.0) & vga-ddraw
     // hr = IDirectDrawSurface_Lock(lpBackBuffer, &rect, &ddsd, DDLOCK_SURFACEMEMORYPTR | DDLOCK_WAIT | DDLOCK_WRITEONLY, NULL);
     // Lock(lpPrimary, ...) returns DDERR_CANTLOCKSURFACE under VBEMP
     hr = IDirectDrawSurface_Lock(lpBackBuffer, NULL, &ddsd, DDLOCK_SURFACEMEMORYPTR | DDLOCK_WAIT | DDLOCK_WRITEONLY, NULL);

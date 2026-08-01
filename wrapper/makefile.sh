@@ -1,0 +1,1 @@
+i686-w64-mingw32-gcc -DNDEBUG -DRA95_FLIP -O3 -Wall -Wl,--enable-stdcall-fixup -s ddraw_wrapper.c -shared -o ddraw.dll -ldxguid ddraw.def
