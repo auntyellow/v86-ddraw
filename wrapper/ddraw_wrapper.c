@@ -38,6 +38,10 @@ void DebugPrint(const char *format, ...)
 
 #endif
 
+#if defined(RA95_FLIP) && defined(RA95_BLTFAST)
+#error "remove RA95_FLIP or RA95_BLTFAST"
+#endif
+
 static HMODULE g_hRealDDraw = NULL;
 
 typedef HRESULT (WINAPI *DirectDrawCreate_t)(LPGUID, LPDIRECTDRAW *, IUnknown *);
@@ -250,9 +254,7 @@ HRESULT STDMETHODCALLTYPE DD_CreateSurface(WrappedDirectDraw *This, LPDDSURFACED
     HRESULT hr;
     BOOL bAttach;
     DDSURFACEDESC ddsd;
-#ifdef RA95_FLIP
     DDSCAPS ddsCaps;
-#endif
 
     printf(("DD_CreateSurface: this=0x%p desc=0x%p out_wrapped=0x%p\n", This, lpddsd, ppSurf));
     ddsd = *lpddsd;
@@ -284,6 +286,13 @@ HRESULT STDMETHODCALLTYPE DD_CreateSurface(WrappedDirectDraw *This, LPDDSURFACED
 
     attached = NULL;
     if (bAttach) {
+        UNREFERENCED_PARAMETER(ddsCaps);
+#ifdef RA95_FLIP
+        ZeroMemory(&ddsCaps, sizeof(ddsCaps));
+        ddsCaps.dwCaps = DDSCAPS_BACKBUFFER;
+        hr = real->lpVtbl->GetAttachedSurface(real, &ddsCaps, &attached);
+        printf(("DD_CreateSurface: GetAttachedSurface returned 0x%08lX (use Flip)\n", hr));
+#endif
 #ifdef RA95_BLTFAST
         ZeroMemory(&ddsd, sizeof(ddsd));
         ddsd.dwSize = sizeof(ddsd);
@@ -302,11 +311,6 @@ HRESULT STDMETHODCALLTYPE DD_CreateSurface(WrappedDirectDraw *This, LPDDSURFACED
             hr = This->real->lpVtbl->CreateSurface(This->real, &ddsd, &attached, NULL);
             printf(("DD_CreateSurface: CreateSurface (attached) returned 0x%08lX (use BltFast)\n", hr));
         }
-#else
-        ZeroMemory(&ddsCaps, sizeof(ddsCaps));
-        ddsCaps.dwCaps = DDSCAPS_BACKBUFFER;
-        hr = real->lpVtbl->GetAttachedSurface(real, &ddsCaps, &attached);
-        printf(("DD_CreateSurface: GetAttachedSurface returned 0x%08lX (use Flip)\n", hr));
 #endif
     }
 
@@ -888,14 +892,15 @@ HRESULT STDMETHODCALLTYPE Surf_Unlock(WrappedSurface *This, LPRECT lpRect)
     }
     if (This->attached) {
         hr = This->attached->lpVtbl->Unlock(This->attached, lpRect);
-#ifdef RA95_BLTFAST
-        hr2 = This->real->lpVtbl->BltFast(This->real, 0, 0, This->attached, NULL, DDBLTFAST_WAIT | DDBLTFAST_NOCOLORKEY);
-        printf(("Surf_Unlock: BltFast returned 0x%08lX\n", hr2));
-#else
+        UNREFERENCED_PARAMETER(hr2);
+#ifdef RA95_FLIP
         hr2 = This->real->lpVtbl->Flip(This->real, NULL, DDFLIP_WAIT);
         printf(("Surf_Unlock: Flip returned 0x%08lX\n", hr2));
 #endif
-        UNREFERENCED_PARAMETER(hr2);
+#ifdef RA95_BLTFAST
+        hr2 = This->real->lpVtbl->BltFast(This->real, 0, 0, This->attached, NULL, DDBLTFAST_WAIT | DDBLTFAST_NOCOLORKEY);
+        printf(("Surf_Unlock: BltFast returned 0x%08lX\n", hr2));
+#endif
         printf(("Surf_Unlock: attached=0x%p result=0x%08lX\n", This->attached, hr));
     } else {
         hr = This->real->lpVtbl->Unlock(This->real, lpRect);
