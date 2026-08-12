@@ -36,7 +36,7 @@ In Windows 95/98/ME, VMDisp9x and VBEMP 9x support method 1. In Windows NT (2000
 | VBEMP NT | ❌ | ❌ | ✅ | ✅ |
 | Windows XP \* | ❌ | ❌ | ✅ | ✅ |
 
-\* Note: VBEMP is not required in Windows XP.
+\* Note: VBEMP is not required in Windows XP and later.
 
 ### Game Case Studies
 
@@ -53,7 +53,7 @@ In Windows 95/98/ME, VMDisp9x and VBEMP 9x support method 1. In Windows NT (2000
 
 The wrapper helps bypass the primary surface memory check and wraps the Lock/Unlock calls on the primary surface, converting them into Flip or BltFast operations on the fly.
 
-| Game | VMPDisp9x | VBEMP 9x | VBEMP 9x + wrapper | VBEMP NT | VBEMP NT + wrapper |
+| Game | VMPDisp9x | VBEMP 9x | VBEMP 9x + wrapper | VBEMP NT or WinXP | VBEMP NT or WinXP + wrapper |
 |-|-|-|-|-|-|
 | **RA95** | ✅<sup> [1]</sup> | ❌<sup> [2]</sup> | ✅<sup> [3]</sup> | ❌<sup> [2]</sup> | ✅<sup> [4]</sup> |
 | **StarCraft** | ✅ | ✅ | ❌<sup> [5]</sup> | ✅<sup> [6]</sup> | ✅<sup> [7]</sup> |
@@ -63,7 +63,7 @@ Notes:
 1. Unstable for FunkyFr3sh's build in v86.
 2. Causes a fatal alert.
 3. Requires the `RA95_SKIP_CHECK` macro (`RA95_FLIP` and `RA95_BLTFAST` will be slower). Placing `ddraw.dll` into the `ra95.exe` directory usually fails because Windows 98's `dsound.dll` relies on the `VidMem*` functions exported by `ddraw.dll`. As a workaround, rename `ddraw.dll` to `ddwrp.dll` and modify the Import Directory of `ra95.exe` using [CFF Explorer](https://ntcore.com/explorer-suite/).
-4. Requires the `RA95_FLIP` macro (smoother than  `RA95_BLTFAST`).
+4. Requires the `RA95_FLIP` macro (smoother than `RA95_BLTFAST`).
 5. `StarCraft.exe` loads `ddraw.dll` dynamically, therefore the workaround described in Note 3 is not applicable here.
 6. Fallback to Blt.
 7. The wrapper is not strictly necessary here, but works fine.
